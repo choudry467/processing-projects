@@ -1,26 +1,58 @@
+/* 
+ * COVID-19 Simulator
+ * Visualization inspired by this Washington Post article: https://www.washingtonpost.com/graphics/2020/world/corona-simulator/
+ * Based on Ira Greenberg's CircleCollision example (https://processing.org/examples/circlecollision.html)
+ * Basic logic added by Michelle Dudley.
+ * There are some lazy/suspect design decisions I've made that I've marked with TODOs.
+ */
+
+// A list of Ball objects representing all the people in the simulation.
 ArrayList<Ball> balls =  new ArrayList<Ball>();
+
+// Totals of infected/uninfected/recovered people in the population.
+// Stored as separate variables because looping through all the people
+// in the list would be very inefficient since we check these numbers
+// every frame to update the statistics at the top of the screen.
+
+// TODO: These numbers aren't connected to the initial setup of the
+// population (i.e., getIsInfected() doesn't change to match the number
+// of infected people if it's changed up here). These should be connected
+// in some way.
 int infected = 1;
 int uninfected = 199;
 int recovered = 0;
 
+// cols stores the columns in the graph at the top of the screen.
 ArrayList<Column> cols = new ArrayList<Column>();
-// position on screen where the next graph column will go
+// leftCol is the pixel position on screen where the next graph column will go.
+// It is initially offset to take into account the words/numbers on the left
+// side of the screen.
 int leftCol = 110;
 
-// counts number of frames, used to limit number of columns that are drawn
+// columnCounter counts the number of frames that have passed. It's used in 
+// draw() to limit the number of columns that are drawn because drawing once every
+// frame makes the graph outgrow the size of the window too quickly.
 int columnCounter = 0;
 
 void setup() {
   size(640, 360);
   for (int i = 0; i < 200; i++) {
+    // Adds a new Ball that starts at a random x value and a random y value that
+    // avoids the graph area at the top of the screen.
     balls.add(new Ball(random(width), random(60, height), 5.0, getIsInfected(i), getIsSocialDistancing(i)));
   }
 }
 
+// Currently, only the first Ball is returned as infected.
+// TODO: Make this variable based on how many people we'd like to be infected
+// initially.
 State getIsInfected(int i) {
   return i == 0 ? State.INFECTED : State.UNINFECTED;
 }
 
+// Currently, about 1 in 8 people are social distancing. The first person
+// is set to not be social distancing because it makes the simulation move faster.
+// TODO: Update this logic as necessary when getIsInfected() is updated.
 boolean getIsSocialDistancing(int i) {
   return floor(random(0, 8)) != 0 && i != 0;
 }
@@ -36,17 +68,19 @@ void draw() {
 
   drawStats();
   
-  // only draw new parts of the graph every 10 frames so that the screen doesn't fill up too quickly
+  // Only draw new parts of the graph every 10 frames so that the screen doesn't 
+  // fill up too quickly.
   if (columnCounter % 10 == 0) {
     cols.add(new Column());
     leftCol += 1;
   }
+  // Update the number of frames that have happened.
   columnCounter++;
   for (Column c : cols) {
     c.display();
   }
   
-  
+  // Check for collisions between every ball and every other ball.
   for (int i = 0; i < balls.size(); i++) { //<>//
     for (int j = i + 1; j < balls.size(); j++) {
       balls.get(i).checkCollision(balls.get(j));
@@ -54,6 +88,7 @@ void draw() {
   }
 }
 
+// Draw all the words to the left of the graph, as well as their accompanying numbers.
 void drawStats() {
   fill(204);
   rect(0, 0, width, 60);
@@ -72,23 +107,27 @@ enum State {
 }
 
 
-
+/* Ball represents an individual person in the simulation. The person has
+ * an infection State, and can be social distancing.
+ * TODO: infectedDays as it's implemented right now is inelegant. Might be
+ * better to move it to a State class instead.
+ */
 class Ball {
   PVector position;
   PVector velocity;
 
   float radius, m;
   State state;
-  // tracks how many days a person has been infected
-  // after 1000 days/frames, the person recovers
+  // If infected, tracks how many days a person has been infected.
+  // After 1000 days/frames, the person recovers.
   int infectedDays;
   boolean isSocialDistancing;
 
   Ball(float x, float y, float r_, State state, boolean isSocialDistancing) {
     position = new PVector(x, y);
     radius = r_;
-    // people who are social distancing should start and stay at 0 velocity,
-    // so they need to be heavy to avoid moving due to collisions
+    // People who are social distancing should start and stay at 0 velocity,
+    // so they need to be heavy to avoid moving due to collisions.
     if (isSocialDistancing) {
       m = 1000;
       velocity = new PVector(0, 0);
@@ -106,6 +145,8 @@ class Ball {
     if (state == State.INFECTED) {
       infectedDays++;
     }
+    // If the person has been infected for 1000 days, they should be moved into
+    // the recovered state.
     if (infectedDays == 1000) {
       state = State.RECOVERED;
       infectedDays = 0;
@@ -130,6 +171,10 @@ class Ball {
     }
   }
   
+  // Update state of this ball and the ball with which it collided. Also update
+  // the global variables that count the number of infected people.
+  // (possible) TODO: Separate out the part that deals with global variables from
+  // code that deals with the individual Balls specifically.
   void checkAndSetInfection(Ball other) {
     if (other.state == State.INFECTED  && this.state == State.UNINFECTED) {
       this.state = State.INFECTED;
@@ -246,10 +291,13 @@ class Ball {
   void display() {
     noStroke();
     if (state == State.INFECTED) {
+      // Infected people are drawn in red.
       fill(252, 3, 40);
     } else if (state == State.UNINFECTED) {
+      // Uninfected people are drawn in gray.
       fill(204);
     } else {
+      // Recovered people are drawn in green
       fill(135, 224, 145);
     }
     
@@ -257,7 +305,10 @@ class Ball {
   }
 }
 
-
+/* Column represents a column of the graph that exists above the ball simulation.
+ * It calculates the sizes of the rectangles that make up a column based on the ratio
+ * between each of the "types" of people (infected, uninfected, recovered).
+ */
 class Column {
   int colWidth = 1;
   int top = 10;
@@ -291,10 +342,13 @@ class Column {
   void display() {
     noStroke();
     rectMode(CORNERS);
+    // Draw recovered rectangle.
     fill(135, 224, 145);
     rect(position1Top.x, position1Top.y, position1Bottom.x, position1Bottom.y);
+    // Draw uninfected rectangle.
     fill(180);
     rect(position2Top.x, position2Top.y, position2Bottom.x, position2Bottom.y); //<>//
+    // Draw infected rectangle.
     fill(252, 3, 40);
     rect(position3Top.x, position3Top.y, position3Bottom.x, position3Bottom.y);
   }
