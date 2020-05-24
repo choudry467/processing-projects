@@ -1,3 +1,6 @@
+import controlP5.*;
+
+ControlP5 cp5;
 /* 
  * COVID-19 Simulator
  * Visualization inspired by this Washington Post article: https://www.washingtonpost.com/graphics/2020/world/corona-simulator/
@@ -18,9 +21,13 @@ ArrayList<Ball> balls =  new ArrayList<Ball>();
 // population (i.e., getIsInfected() doesn't change to match the number
 // of infected people if it's changed up here). These should be connected
 // in some way.
-int infected = 1;
-int uninfected = 199;
+int infected = 0;
+int uninfected = 200 - infected;
 int recovered = 0;
+int sDLevel=-1;
+int recovery = 1000;
+int chanceOfInfection = -1;
+int curr;
 
 // cols stores the columns in the graph at the top of the screen.
 ArrayList<Column> cols = new ArrayList<Column>();
@@ -34,31 +41,102 @@ int leftCol = 110;
 // frame makes the graph outgrow the size of the window too quickly.
 int columnCounter = 0;
 
+
+//radiobutton initialized
+RadioButton r1;
+RadioButton r2;
+
+
+//Checkbox initiated
+Boolean mask = false;
+Boolean play = false;
+
 void setup() {
-  size(640, 360);
+  size(1000, 800);
   for (int i = 0; i < 200; i++) {
     // Adds a new Ball that starts at a random x value and a random y value that
     // avoids the graph area at the top of the screen.
-    balls.add(new Ball(random(width), random(60, height), 5.0, getIsInfected(i), getIsSocialDistancing(i)));
+    balls.add(new Ball(random(5,width-5), random(160,height-5), 5.0, getIsInfected(i), getIsSocialDistancing(i)));
+    
+     
   }
+   cp5 = new ControlP5(this);
+   cp5.addSlider("sick")
+     .setPosition(10,10)
+     .setWidth(300)
+     .setRange(0,200) // values can range from big to small as well
+     .setValue(1)
+     .setNumberOfTickMarks(51)
+     .setSliderMode(Slider.FLEXIBLE)
+     .setLabel("Initially Sick People")
+     ;
+     
+     cp5 = new ControlP5(this);
+     r1 = cp5.addRadioButton("sDistance")
+         .setPosition(10,50)
+         .setSize(20,20)
+         .setColorForeground(color(0))
+         .setColorActive(color(255))
+         .setColorLabel(color(0))
+         .setItemsPerRow(6)
+         .setSpacingColumn(10)
+         .setTitle("Social Distancing Level")
+         .addItem("1",6)
+         .addItem("2",5)
+         .addItem("3",4)
+         .addItem("4",3)
+         .addItem("5",2)
+         .addItem("6",1)
+         ;
+         
+     cp5 = new ControlP5(this);
+     r2 = cp5.addRadioButton("hCare")
+         .setPosition(530,50)
+         .setSize(20,20)
+         .setColorForeground(color(0))
+         .setColorActive(color(255))
+         .setColorLabel(color(0))
+         .setItemsPerRow(6)
+         .setSpacingColumn(50)
+         .addItem("Low",2000)
+         .addItem("Average",1000)
+         .addItem("Good",800)
+         .addItem("Excellent",500)
+         ;
+         
+      cp5 = new ControlP5(this);
+      cp5.addToggle("Masks")
+     .setPosition(400,50)
+     .setSize(50,20)
+     .setValue(false)
+     .setMode(ControlP5.SWITCH)
+     ;
+     
+     cp5 = new ControlP5(this);
+      cp5.addToggle("PlaynPause")
+     .setPosition(900,10)
+     .setSize(50,20)
+     .setValue(false)
+     .setMode(ControlP5.SWITCH)
+     ;
 }
 
 // Currently, only the first Ball is returned as infected.
 // TODO: Make this variable based on how many people we'd like to be infected
 // initially.
 State getIsInfected(int i) {
-  return i == 0 ? State.INFECTED : State.UNINFECTED;
+  return i < infected? State.INFECTED : State.UNINFECTED;
 }
 
 // Currently, about 1 in 8 people are social distancing. The first person
 // is set to not be social distancing because it makes the simulation move faster.
 // TODO: Update this logic as necessary when getIsInfected() is updated.
 boolean getIsSocialDistancing(int i) {
-  return floor(random(0, 8)) != 0 && i != 0;
+  return floor(random(sDLevel)) == 0 && i > infected;
 }
 
 void draw() {
-  background(51);
+  background(31);
 
   for (Ball b : balls) {
     b.update();
@@ -88,14 +166,64 @@ void draw() {
   }
 }
 
+
+void sDistance(int a){
+  sDLevel=a;
+  reset();
+}
+
+void hCare(int b){
+  recovery = b;
+  reset();
+}
+
+void sick(int sick){
+ curr= sick;
+ reset();
+}
+
+void Masks(boolean Masks) {
+  if(Masks==true) {
+    chanceOfInfection = 2;
+  } else {
+    chanceOfInfection = 1;
+  }
+  reset();
+}
+
+void PlaynPause(boolean PlaynPause) {
+  if(PlaynPause==true) {
+    noLoop();
+  } else {
+    loop();
+  }
+}
+
+// resets the simulation
+void reset(){ 
+  infected = curr;
+  balls.clear();
+ for (int i = 0; i < 200; i++) {
+    // Adds a new Ball that starts at a random x value and a random y value that
+    // avoids the graph area at the top of the screen.
+    balls.add(new Ball(random(5,width-5), random(160,height-5), 4.0, getIsInfected(i), getIsSocialDistancing(i)));    
+  }
+  leftCol = 110;
+  cols.clear();
+  uninfected = 200 - infected;
+  recovered = 0;
+}
+
 // Draw all the words to the left of the graph, as well as their accompanying numbers.
 void drawStats() {
   fill(204);
-  rect(0, 0, width, 60);
+  rect(0, 150, width, 0);
   fill(51);
-  text("healthy: " + uninfected, 10, 30);
-  text("sick: " + infected, 10, 40);
-  text("recovered: " + recovered, 10, 20);
+  text("Social Distancing Level", 195, 65);
+  text("HealthCare Level", 600, 40);
+  text("healthy: " + uninfected, 10, 110);
+  text("sick: " + infected, 10, 120);
+  text("recovered: " + recovered, 10, 100);
 }
 
 
@@ -147,7 +275,7 @@ class Ball {
     }
     // If the person has been infected for 1000 days, they should be moved into
     // the recovered state.
-    if (infectedDays == 1000) {
+    if (infectedDays == recovery) {
       state = State.RECOVERED;
       infectedDays = 0;
       infected--;
@@ -157,16 +285,12 @@ class Ball {
 
   void checkBoundaryCollision() {
     if (position.x > width-radius) {
-      position.x = width-radius;
       velocity.x *= -1;
     } else if (position.x < radius) {
-      position.x = radius;
       velocity.x *= -1;
     } else if (position.y > height-radius) {
-      position.y = height-radius;
       velocity.y *= -1;
-    } else if (position.y < radius + 60) {
-      position.y = radius + 60;
+    } else if (position.y < radius + 150) {
       velocity.y *= -1;
     }
   }
@@ -176,12 +300,12 @@ class Ball {
   // (possible) TODO: Separate out the part that deals with global variables from
   // code that deals with the individual Balls specifically.
   void checkAndSetInfection(Ball other) {
-    if (other.state == State.INFECTED  && this.state == State.UNINFECTED) {
+    if (other.state == State.INFECTED  && this.state == State.UNINFECTED && floor(random(chanceOfInfection)) == 0) {
       this.state = State.INFECTED;
       infected++;
       uninfected--;
     }
-    if (this.state == State.INFECTED && other.state == State.UNINFECTED) {
+    if (this.state == State.INFECTED && other.state == State.UNINFECTED  && floor(random(chanceOfInfection)) == 0) {
       other.state = State.INFECTED;
       infected++;
       uninfected--;
@@ -311,7 +435,7 @@ class Ball {
  */
 class Column {
   int colWidth = 1;
-  int top = 10;
+  int top = 90;
   int totalHeight = 30;
   int numActors = balls.size();
   int infected_, uninfected_, recovered_; //<>//

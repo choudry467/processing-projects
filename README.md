@@ -13,11 +13,11 @@ There are two primary classes:`Ball` and `Column`.
 The Improvements that I plan to make to this simulation:
 
 * Logic:
-  * Make the simulator take deaths into account.
   * The Simulator takes into account the level of measures that are taken to control the spread of disease (Social distancing and Quarantine)
-  * Additional paramaters that show whether people are wearing masks and using washing hands etc(would change the probability of people getting infected on contact)
-  * Additional variables including hospital capacity and availibility of resources.
+  * Additional paramaters that show whether people are wearing masks (would change the probability of people getting infected on contact)
+  * Additional variables including number of sick people in the start.
+  * Level of health care facilities available
 
 * User interface:
-  * Give users more control of the simulation like they can restart it and change certain parameters.
+  * Gives users more control of the simulation like they can restart it and change certain parameters.
   
