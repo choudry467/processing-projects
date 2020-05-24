@@ -21,3 +21,8 @@ The Improvements that I plan to make to this simulation:
 * User interface:
   * Gives users more control of the simulation like they can restart it and change certain parameters.
   
+* Other Small Improvements:
+  * It doesn't take everyone same amount of time to recover. People take a range of different times to recover.
+  * Chnages made through slider and buttons are reflected on the statistics, they were ar first limited to just the simulation.
+  * Some balls would at first appear partially outside the simulatoin screen. Fixed that.
+  

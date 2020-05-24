@@ -17,10 +17,7 @@ ArrayList<Ball> balls =  new ArrayList<Ball>();
 // in the list would be very inefficient since we check these numbers
 // every frame to update the statistics at the top of the screen.
 
-// TODO: These numbers aren't connected to the initial setup of the
-// population (i.e., getIsInfected() doesn't change to match the number
-// of infected people if it's changed up here). These should be connected
-// in some way.
+
 int infected = 0;
 int uninfected = 200 - infected;
 int recovered = 0;
@@ -103,7 +100,9 @@ void setup() {
          .addItem("Good",800)
          .addItem("Excellent",500)
          ;
-         
+      
+      
+      // Masks Toggle. When switched on, only 1/2 collisions would result in infection   
       cp5 = new ControlP5(this);
       cp5.addToggle("Masks")
      .setPosition(400,50)
@@ -112,6 +111,8 @@ void setup() {
      .setMode(ControlP5.SWITCH)
      ;
      
+     
+     //Play and Pause button
      cp5 = new ControlP5(this);
       cp5.addToggle("PlaynPause")
      .setPosition(900,10)
@@ -121,16 +122,13 @@ void setup() {
      ;
 }
 
-// Currently, only the first Ball is returned as infected.
-// TODO: Make this variable based on how many people we'd like to be infected
-// initially.
+// A slider can be used to adjust the number of people infected in the start
 State getIsInfected(int i) {
   return i < infected? State.INFECTED : State.UNINFECTED;
 }
 
-// Currently, about 1 in 8 people are social distancing. The first person
-// is set to not be social distancing because it makes the simulation move faster.
-// TODO: Update this logic as necessary when getIsInfected() is updated.
+// You can pick different levels of social distancing. (Everyone, 1/2, 1/3, 1/4, 1/5, No one)
+// Infected people are set not to social distance
 boolean getIsSocialDistancing(int i) {
   return floor(random(sDLevel)) == 0 && i > infected;
 }
@@ -204,8 +202,6 @@ void reset(){
   infected = curr;
   balls.clear();
  for (int i = 0; i < 200; i++) {
-    // Adds a new Ball that starts at a random x value and a random y value that
-    // avoids the graph area at the top of the screen.
     balls.add(new Ball(random(5,width-5), random(160,height-5), 4.0, getIsInfected(i), getIsSocialDistancing(i)));    
   }
   leftCol = 110;
@@ -273,9 +269,9 @@ class Ball {
     if (state == State.INFECTED) {
       infectedDays++;
     }
-    // If the person has been infected for 1000 days, they should be moved into
-    // the recovered state.
-    if (infectedDays == recovery) {
+    // Depending on the level of health care facilities, time to recover varies. 
+    //It is also randomized because different people take different amount of time to recover
+    if (infectedDays >= recovery && floor(random(200)) == 0) {
       state = State.RECOVERED;
       infectedDays = 0;
       infected--;
@@ -297,8 +293,7 @@ class Ball {
   
   // Update state of this ball and the ball with which it collided. Also update
   // the global variables that count the number of infected people.
-  // (possible) TODO: Separate out the part that deals with global variables from
-  // code that deals with the individual Balls specifically.
+  // Depends on whether Masks toggle is switched on or not. If it is, not every collision would result in infection.
   void checkAndSetInfection(Ball other) {
     if (other.state == State.INFECTED  && this.state == State.UNINFECTED && floor(random(chanceOfInfection)) == 0) {
       this.state = State.INFECTED;
