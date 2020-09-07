@@ -1,4 +1,4 @@
-# processing-projects
+ processing-projects
 ## COVID-19 Simulator by Choudry Abdul Rehman
 The COVID-19 Simulator is based on [this Washington Post simulation](https://www.washingtonpost.com/graphics/2020/world/corona-simulator/). In its current state, it simulates a scenario in which people are social distancing. *This is not meant as a real simulation of COVID-19 transmission, nor should it be taken as medical advice.*
 
